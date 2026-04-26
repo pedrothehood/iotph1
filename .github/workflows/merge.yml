@@ -1,0 +1,27 @@
+name: Auto Merge MD Files
+on: 
+  push:
+    branches:
+      - main  # Führt den Workflow aus, wenn du etwas in den Main-Branch pushst
+
+jobs:
+  merge-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Wichtig: Erlaubt der Action, Dateien hochzuladen
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Dateien zusammenführen
+        run: |
+          cat datei1.md datei2.md > merged-datei.md
+
+      - name: Änderungen committen und pushen
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@://github.com"
+          git add fertig.md
+          # Nur committen, wenn sich tatsächlich etwas geändert hat
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-merge MD files" && git push)
