@@ -1,73 +1,75 @@
 <?php
-// getsdata.php
+// Erstelle php rest service
+// Ergebnis im json-format zurückgeben
 
-// Konfiguration laden
+// Konfiguration einlesen
 $config = require __DIR__ . '/../config.php';
 
-$host = $config['db_host'];
-$db = $config['db_name'];
-$user = $config['db_user'];
-$pass = $config['db_pass'];
-$charset = 'utf8mb4';
+$host    = $config['db_host'];
+$db      = $config['db_name'];
+$user    = $config['db_user'];
+$pass    = $config['db_pass'];
 $api_key_value = $config['api_key'];
+$charset = 'utf8mb4';
 
-// Datenbankverbindung herstellen
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-];
-
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Datenbankverbindungsfehler']);
-    exit;
-}
-
-// API-Key überprüfen
+// API-Key aus GET-Parameter einlesen
 $api_key = $_GET['api_key'] ?? '';
+
+// API-Key prüfen
 if ($api_key !== $api_key_value) {
     http_response_code(401);
-    echo json_encode(['error' => 'Ungültiger API-Key']);
+    echo json_encode(['error' => 'Unauthorized: Invalid API key']);
     exit;
 }
 
-// Sensor-ID aus GET-Parametern lesen
+// sensor_id aus GET-Parameter einlesen
 $sensor_id = $_GET['sensor_id'] ?? null;
 
 try {
-    // Daten aus sensor-Tabelle abrufen
+    // DB-Verbindung herstellen
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+    
+    $pdo = new PDO($dsn, $user, $pass, $options);
+    
+    // Daten aus Tabelle Sensor abrufen
     $sensor_data = [];
     if ($sensor_id) {
-        $stmt = $pdo->prepare("SELECT * FROM sensor WHERE sensorid = ?");
+        $stmt = $pdo->prepare("SELECT * FROM Sensor WHERE sensorid = ?");
         $stmt->execute([$sensor_id]);
         $sensor_data = $stmt->fetchAll();
     } else {
-        $stmt = $pdo->query("SELECT * FROM sensor");
+        $stmt = $pdo->query("SELECT * FROM Sensor");
         $sensor_data = $stmt->fetchAll();
     }
     
-    // Daten aus sensorid-Tabelle abrufen
+    // Daten aus Tabelle Sensorid abrufen
     $sensorid_data = [];
     if ($sensor_id) {
-        $stmt = $pdo->prepare("SELECT * FROM sensorid WHERE sensorid = ?");
+        $stmt = $pdo->prepare("SELECT * FROM Sensorid WHERE sensorid = ?");
         $stmt->execute([$sensor_id]);
         $sensorid_data = $stmt->fetchAll();
     } else {
-        $stmt = $pdo->query("SELECT * FROM sensorid");
+        $stmt = $pdo->query("SELECT * FROM Sensorid");
         $sensorid_data = $stmt->fetchAll();
     }
     
-    // Ergebnis zurückgeben
+    // Ergebnis als JSON zurückgeben
+    header('Content-Type: application/json');
     echo json_encode([
-        'sensor' => $sensor_data,
-        'sensorid' => $sensorid_data
+        'Sensor' => $sensor_data,
+        'Sensorid' => $sensorid_data
     ]);
     
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Datenbankabfragefehler']);
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
 ?>
