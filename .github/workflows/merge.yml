@@ -1,0 +1,36 @@
+name: Auto Merge MD Files
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  merge-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Dateien zusammenführen
+        run: |
+          cat datei1.md datei2.md > merged-datei.md
+
+      - name: Änderungen committen und pushen
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Wichtig: Der Name muss mit der oben erstellten Datei übereinstimmen!
+          git add merged-datei.md
+          
+          # Nur committen, wenn es Änderungen gibt
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Auto-merge MD files [skip ci]"
+            git push
+          else
+            echo "Keine Änderungen zum Committen."
+          fi
