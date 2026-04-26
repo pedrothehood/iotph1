@@ -29,7 +29,7 @@ jobs:
           
           # Nur committen, wenn es Änderungen gibt
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Auto-merge MD files"
+            git commit -m "Auto-merge MD files [skip ci]"
             git push
           else
             echo "Keine Änderungen zum Committen."
