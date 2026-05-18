@@ -1,6 +1,6 @@
 <?php
 // Erstelle php rest service
-// Ergebnis im json-format zurückgeben
+// Ergebnis im json-format zurückgeben!
 
 // Konfiguration einlesen
 $config = require __DIR__ . '/../config.php';
